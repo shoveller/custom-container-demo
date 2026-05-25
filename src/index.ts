@@ -5,7 +5,7 @@ import type { Context } from "hono";
 const CONTAINER_POOL_SIZE = 1;
 
 export class MyContainer extends Container<Env> {
-	// Port the container listens on (default: 8080)
+	// Port the container listens on
 	defaultPort = 3000;
 	// Time before container sleeps due to inactivity (default: 30s)
 	sleepAfter = "2m";
