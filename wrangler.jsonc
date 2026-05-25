@@ -16,8 +16,9 @@
 	"containers": [
 		{
 			"class_name": "MyContainer",
-			"image": "./Dockerfile",
-			"max_instances": 10
+			"image": "registry.cloudflare.com/05d28f4d9bcd9c4b42a42c06420cb464/simple-node-health:dev",
+			"instance_type": "lite",
+			"max_instances": 1
 		}
 	],
 	"durable_objects": {

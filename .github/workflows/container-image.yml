@@ -1,0 +1,29 @@
+name: Container image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "container/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/container-image.yml"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run image:push

@@ -1,24 +1,18 @@
-# syntax=docker/dockerfile:1
+FROM node:24-slim AS deps
 
-FROM golang:1.24-alpine AS build
-
-# Set destination for COPY
 WORKDIR /app
 
-# Download any Go modules
-COPY container_src/go.mod ./
-RUN go mod download
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
-# Copy container source code
-COPY container_src/*.go ./
+FROM node:24-slim AS runtime
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /server
+ENV NODE_ENV=production
+WORKDIR /app
 
-FROM scratch
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /server /server
-EXPOSE 8080
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY server.js ./
 
-# Run
-CMD ["/server"]
+EXPOSE 3000
+CMD ["node", "server.js"]
