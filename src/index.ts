@@ -1,5 +1,8 @@
 import { Container, getContainer, getRandom } from "@cloudflare/containers";
 import { Hono } from "hono";
+import type { Context } from "hono";
+
+const CONTAINER_POOL_SIZE = 1;
 
 export class MyContainer extends Container<Env> {
 	// Port the container listens on (default: 8080)
@@ -31,40 +34,17 @@ const app = new Hono<{
 }>();
 
 // Home route with available endpoints
-app.get("/", (c) => {
-	return c.text(
-		"Available endpoints:\n" +
-			"GET /container/<ID> - Start a container for each ID with a 2m timeout\n" +
-			"GET /lb - Load balance requests over multiple containers\n" +
-			"GET /error - Start a container that errors (demonstrates error handling)\n" +
-			"GET /singleton - Get a single specific container instance",
-	);
+app.get("/_gateway/health", (c) => {
+	return c.json({ ok: true, poolSize: CONTAINER_POOL_SIZE });
 });
 
-// Route requests to a specific container using the container ID
-app.get("/container/:id", async (c) => {
-	const id = c.req.param("id");
-	const containerId = c.env.MY_CONTAINER.idFromName(`/container/${id}`);
-	const container = c.env.MY_CONTAINER.get(containerId);
-	return await container.fetch(c.req.raw);
-});
+type AppContext = Context<{ Bindings: Env }>;
 
-// Demonstrate error handling - this route forces a panic in the container
-app.get("/error", async (c) => {
-	const container = getContainer(c.env.MY_CONTAINER, "error-test");
-	return await container.fetch(c.req.raw);
-});
+// Proxy public traffic to the container pool without exposing container IDs.
+app.all("*", async (c: AppContext) => {
+	const container = await getRandom(c.env.MY_CONTAINER, CONTAINER_POOL_SIZE);
 
-// Load balance requests across multiple containers
-app.get("/lb", async (c) => {
-	const container = await getRandom(c.env.MY_CONTAINER, 3);
-	return await container.fetch(c.req.raw);
-});
-
-// Get a single container instance (singleton pattern)
-app.get("/singleton", async (c) => {
-	const container = getContainer(c.env.MY_CONTAINER);
-	return await container.fetch(c.req.raw);
-});
+	return container.fetch(c.req.raw);
+})
 
 export default app;
