@@ -16,5 +16,5 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY server.js ./
 
-EXPOSE 3000
+EXPOSE 8787
 CMD ["node", "server.js"]
