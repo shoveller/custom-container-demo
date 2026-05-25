@@ -5,9 +5,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "container/**"
+      - "container_src/**"
       - "package.json"
-      - "package-lock.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/container-image.yml"
 
 jobs:
@@ -22,8 +22,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: corepack enable
 
-      - run: npm run image:push
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run image:push
