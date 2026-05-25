@@ -33,7 +33,7 @@ If `wrangler.jsonc` points to a local Dockerfile, Wrangler may build that Docker
 ```text
 custom-container-demo/
   src/
-    index.ts                 # Worker and Container binding routes
+    index.ts                 # Worker gateway and Container controller class
   container_src/
     Dockerfile               # Container image recipe
     .dockerignore            # Keeps build context small
@@ -61,6 +61,17 @@ custom-container-demo/
 ```sh
 pnpm install --frozen-lockfile
 ```
+
+## Runtime roles
+
+`src/index.ts` contains two different runtime roles.
+
+| Code | Role | What it does |
+|---|---|---|
+| `MyContainer extends Container<Env>` | Container controller | Defines how one real container instance is started, stopped, configured, and proxied to. It owns container lifecycle settings such as `defaultPort`, `sleepAfter`, environment variables, and lifecycle hooks. |
+| `app` / Worker `fetch` entrypoint | Gateway | Receives public HTTP requests and chooses which container instance handles them. In this demo it keeps one small pool and proxies all normal traffic to a randomly selected container. |
+
+In Cloudflare Containers, a container class is not the application server itself. It is the Worker-side controller for real container instances. The Worker entrypoint acts like a gateway in front of `n` container instances.
 
 ## Build and push the container image
 
@@ -138,10 +149,9 @@ pnpm dev
 
 Useful routes:
 
-- `GET /` — list example routes
-- `GET /singleton` — route to one container instance
-- `GET /container/<id>` — route to a named container instance
-- `GET /lb` — route to one of several container instances
+- `GET /_gateway/health` — handled by the Worker gateway; returns gateway health and pool size.
+- `GET /` — proxied through the Worker gateway to the container server; returns `hello from Cloudflare container`.
+- `GET /health` — proxied through the Worker gateway to the container server; returns `{ "ok": true }`.
 
 The container server listens on port `3000`, and `MyContainer.defaultPort` is also `3000`.
 

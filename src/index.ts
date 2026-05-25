@@ -28,12 +28,12 @@ export class MyContainer extends Container<Env> {
 	}
 }
 
-// Create Hono app with proper typing for Cloudflare Workers
+// Worker gateway: receives public requests and routes them to container instances.
 const app = new Hono<{
 	Bindings: Env;
 }>();
 
-// Home route with available endpoints
+// Gateway-only health check. This does not enter the container.
 app.get("/_gateway/health", (c) => {
 	return c.json({ ok: true, poolSize: CONTAINER_POOL_SIZE });
 });
@@ -45,6 +45,6 @@ app.all("*", async (c: AppContext) => {
 	const container = await getRandom(c.env.MY_CONTAINER, CONTAINER_POOL_SIZE);
 
 	return container.fetch(c.req.raw);
-})
+});
 
 export default app;
