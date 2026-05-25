@@ -2,7 +2,7 @@ import { Container, getContainer, getRandom } from "@cloudflare/containers";
 import { Hono } from "hono";
 
 export class MyContainer extends Container<Env> {
-	// Port the container listens on (default: 8080)
+	// Port the container listens on
 	defaultPort = 3000;
 	// Time before container sleeps due to inactivity (default: 30s)
 	sleepAfter = "2m";
